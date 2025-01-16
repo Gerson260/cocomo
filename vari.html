@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>COCOMO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+        }
+        .form-group input, .form-group select, .form-group textarea, .form-group button {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        .output-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>COCOMO Simulation</h1>
+        <div class="form-group">
+            <label for="txtCodigo">Pega tu código de programación:</label>
+            <textarea id="txtCodigo" rows="10" placeholder="Pega tu código aquí"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="txtSalario">Salario por hora (Bs.):</label>
+            <input type="text" id="txtSalario" placeholder="Ingresa el salario por hora">
+        </div>
+        <div class="form-group">
+            <label for="ctMetodo">Modelo COCOMO:</label>
+            <select id="ctMetodo">
+                <option value="Orgánico">Orgánico</option>
+                <option value="Semi-acoplado">Semi-acoplado</option>
+                <option value="Acoplado">Acoplado</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button onclick="analizarCodigo()">Analizar y Calcular</button>
+            <button onclick="clearOutput()">Limpiar</button>
+        </div>
+        <div id="output" class="output"></div>
+    </div>
+
+    <script>
+        function analizarCodigo() {
+            var codigo = document.getElementById('txtCodigo').value;
+            var salario = parseFloat(document.getElementById('txtSalario').value);
+            var modelo = document.getElementById('ctMetodo').value;
+
+            // Analizar el código para extraer valores
+            var lineas = codigo.split('\n').length; // Número de líneas de código
+            var entradas = (codigo.match(/input\(/g) || []).length; // Contar entradas (ejemplo en Python)
+            var salidas = (codigo.match(/print\(/g) || []).length; // Contar salidas (ejemplo en Python)
+            var parametros = (codigo.match(/def \w+\(/g) || []).length; // Contar funciones (parámetros)
+
+            // Mostrar los valores extraídos
+            var output = document.getElementById('output');
+            output.innerHTML = '';
+            addOutputItem('<strong>Valores extraídos del código:</strong>');
+            addOutputItem('Líneas de código (LDC): ' + lineas);
+            addOutputItem('Entradas: ' + entradas);
+            addOutputItem('Salidas: ' + salidas);
+            addOutputItem('Parámetros (funciones): ' + parametros);
+            addOutputItem('');
+
+            // Calcular COCOMO
+            var LDC = lineas;
+            var MLDC = LDC / 1000;
+
+            var params = {
+                'Orgánico': { a: 3.2, b: 1.05, c: 2.5, d: 0.38 },
+                'Semi-acoplado': { a: 3.0, b: 1.12, c: 2.5, d: 0.35 },
+                'Acoplado': { a: 2.8, b: 1.20, c: 2.5, d: 0.32 }
+            };
+
+            var param = params[modelo];
+            var E = param.a * Math.pow(MLDC, param.b);
+            addOutputItem('ESTIMACION DE ESFUERZO PERSONAL = ' + Math.round(E) + ' persona mes');
+            addOutputItem('');
+
+            var TD = Math.round(param.c * Math.pow(E, param.d));
+            addOutputItem('TD = ' + TD + ' meses para desarrollar el software');
+            addOutputItem('');
+
+            var PN = Math.round(E / TD);
+            addOutputItem('PN = ' + PN + ' personas mes');
+            addOutputItem('');
+
+            var P = Math.round(LDC / E);
+            addOutputItem('P = ' + P + ' Instrucción ó LDC / personas mes');
+            addOutputItem('');
+
+            var Costo = E * salario;
+            addOutputItem('COSTO = ' + Costo.toFixed(2) + ' Bs.');
+            addOutputItem('');
+
+            var cd = Costo / Math.round(E);
+            addOutputItem('COSTO INDIVIDUAL AL DESARROLLADOR = ' + cd.toFixed(2) + ' Bs.');
+            addOutputItem('');
+
+            var cldc = Costo / LDC;
+            addOutputItem('COSTO INDIVIDUAL DE LINEAS DE CODIGO = ' + cldc.toFixed(2) + ' Bs.');
+        }
+
+        function addOutputItem(text) {
+            var output = document.getElementById('output');
+            var div = document.createElement('div');
+            div.className = 'output-item';
+            div.innerHTML = text;
+            output.appendChild(div);
+        }
+
+        function clearOutput() {
+            var output = document.getElementById('output');
+            output.innerHTML = '';
+            document.getElementById('txtCodigo').value = '';
+            document.getElementById('txtSalario').value = '';
+            document.getElementById('ctMetodo').selectedIndex = 0;
+        }
+    </script>
+</body>
+</html>
